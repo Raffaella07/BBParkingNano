@@ -400,8 +400,8 @@ jetTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
 
 	tagUParTAK4B = Var("?bDiscriminator('pfParTAK4LastJetTags:probb')>0?bDiscriminator('pfParTAK4LastJetTags:probb'):-1",float,precision=10,doc="UnifiedParT b vs. udscg"),
 	ParTAK4RegPtRawCorr = Var("?bDiscriminator('pfParTAK4LastJetTags:ptcorr')>0?bDiscriminator('pfParTAK4LastJetTags:ptcorr'):-1",float,precision=10,doc="UnifiedParT universal flavor-aware visible pT regression (no neutrinos), correction relative to raw jet pT"),
-        UParTAK4RegPtRawCorrNeutrino = Var("?bDiscriminator('pfParTAK4LastJetTags:ptnu')>0?bDiscriminator('pfParTAK4LastJetTags:ptnu'):-1",float,precision=10,doc="UnifiedParT universal flavor-aware pT regression neutrino correction, relative to visible. To apply full regression, multiply raw jet pT by both UParTAK4RegPtRawCorr and UParTAK4RegPtRawCorrNeutrino."),
-        UParTAK4RegPtRawRes = Var("?(bDiscriminator('pfParTAK4LastJetTags:ptreshigh')+bDiscriminator('pfParTAK4LastJetTags:ptreslow'))>0?0.5*(bDiscriminator('pfParTAK4LastJetTags:ptreshigh')-bDiscriminator('pfParTAK4LastJetTags:ptreslow')):-1",float,precision=10,doc="UnifiedParT universal flavor-aware jet pT resolution estimator, (q84 - q16)/2"),
+        UParTAK4RegPtRawCorrNeutrino = Var("?bDiscriminator('pfParTAK4LastJetTags:ptcorrnu')>0?bDiscriminator('pfParTAK4LastJetTags:ptcorrnu'):-1",float,precision=10,doc="UnifiedParT universal flavor-aware pT regression neutrino correction, relative to visible. To apply full regression, multiply raw jet pT by both UParTAK4RegPtRawCorr and UParTAK4RegPtRawCorrNeutrino."),
+        UParTAK4RegPtRawRes = Var("?(bDiscriminator('pfParTAK4LastJetTags:ptcorrq84')+bDiscriminator('pfParTAK4LastJetTags:ptcorrq16'))>0?0.5*(bDiscriminator('pfParTAK4LastJetTags:ptcorrq84')-bDiscriminator('pfParTAK4LastJetTags:ptcorrq16')):-1",float,precision=10,doc="UnifiedParT universal flavor-aware jet pT resolution estimator, (q84 - q16)/2"),
 
 
 
