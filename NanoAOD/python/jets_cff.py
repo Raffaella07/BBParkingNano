@@ -180,7 +180,7 @@ pfParticleNetAK4LastJetTagInfos = cms.EDProducer("ParticleNetFeatureEvaluator",
     min_pt_for_track_properties = cms.double(-1),
     min_pt_for_losttrack = cms.double(1.0),
     max_dr_for_losttrack = cms.double(0.2),
-    min_pt_for_taus = cms.double(1.0),
+    min_pt_for_taus = cms.double(20),
     max_eta_for_taus = cms.double(2.5),
     dump_feature_tree = cms.bool(False),
     use_puppiP4 = cms.bool(False),
@@ -191,8 +191,8 @@ pfParticleNetAK4LastNegativeJetTagInfos = pfParticleNetAK4LastJetTagInfos.clone(
     flip_ip_sign = cms.bool(True)
 )
 
-from RecoBTag.ONNXRuntime.boostedJetONNXJetTagsProducer_cfi import boostedJetONNXJetTagsProducer
-pfParticleNetAK4LastJetTags = boostedJetONNXJetTagsProducer.clone();
+#from RecoBTag.ONNXRuntime.boostedJetONNXJetTagsProducer_cfi import boostedJetONNXJetTagsProducer
+pfParticleNetAK4LastJetTags = cms.EDProducer("BoostedJetONNXJetTagsProducer");
 pfParticleNetAK4LastJetTags.src = cms.InputTag("pfParticleNetAK4LastJetTagInfos");
 pfParticleNetAK4LastJetTags.flav_names = cms.vstring('probmu','probele','probtaup1h0p','probtaup1h1p','probtaup1h2p','probtaup3h0p','probtaup3h1p','probtaum1h0p','probtaum1h1p','probtaum1h2p','probtaum3h0p','probtaum3h1p','probb','probc','probuds','probg','ptcorr','ptreshigh','ptreslow','ptnu');
 
@@ -274,7 +274,7 @@ pfParTAK4LastJetTagInfos = cms.EDProducer("ParTFeatureEvaluator",
       min_pt_for_track_properties = cms.double(-1),
       min_pt_for_losttrack = cms.double(1.0),
       max_dr_for_losttrack = cms.double(0.2),
-      min_pt_for_taus = cms.double(1.0),
+      min_pt_for_taus = cms.double(20),
       max_eta_for_taus = cms.double(2.5),
 )
 # only used in calib against fakes 
@@ -288,7 +288,7 @@ with open(cmssw_base_dir+"/src/PhysicsTools/NanoAOD/data/ParTAK4/particle-transf
       output_nodes = jd["output_names"]
       output_nodes = [node.replace("label","prob").replace("_","").replace("targetpt","ptcorr") for node in output_nodes]
   
-pfParTAK4LastJetTags = boostedJetONNXJetTagsProducer.clone();
+pfParTAK4LastJetTags = cms.EDProducer("BoostedJetONNXJetTagsProducer");
 pfParTAK4LastJetTags.src = cms.InputTag("pfParTAK4LastJetTagInfos");
 pfParTAK4LastJetTags.flav_names = cms.vstring(output_nodes);
 pfParTAK4LastJetTags.preprocess_json = cms.string('PhysicsTools/NanoAOD/data/ParTAK4/particle-transformer-3d.json');
@@ -303,7 +303,7 @@ for node in output_nodes:
 parTDiscriminatorLabels = [name.replace("pfParTAK4LastJetTags:","").replace("pfParTAK4LastNegativeJetTags:","neg") for name in parTDiscriminatorNames]
   
 
-#print(parTDiscriminatorNames)
+print(parTDiscriminatorNames)
    
 
 ## Update final jet collection                                                                                                                                                    

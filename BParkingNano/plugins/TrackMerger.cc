@@ -265,6 +265,25 @@ void TrackMerger::produce(edm::StreamID, edm::Event &evt, edm::EventSetup const 
     pcand.addUserInt("nValidHits", trk.bestTrack()->found());
     pcand.addUserInt("keyPacked", iTrk);
     pcand.addUserInt("skipTrack",skipTrack);
+    pcand.addUserFloat("chi2", trk.bestTrack()->chi2()); 
+    pcand.addUserInt("ndof", trk.bestTrack()->ndof()); 
+    pcand.addUserFloat("normalisedChi2", trk.bestTrack()->normalizedChi2()); 
+    pcand.addUserInt("numberOfValidHits", trk.bestTrack()->numberOfValidHits()); 
+    pcand.addUserInt("numberOfLostHits", trk.bestTrack()->numberOfLostHits()); 
+    pcand.addUserInt("numberOfValidPixelHits", trk.bestTrack()->hitPattern().numberOfValidPixelHits()); 
+    pcand.addUserInt("numberOfTrackerLayers", trk.bestTrack()->hitPattern().trackerLayersWithMeasurement()); 
+    pcand.addUserInt("numberOfPixelLayers", trk.bestTrack()->hitPattern().pixelLayersWithMeasurement()); 
+    pcand.addUserInt("qualityIndex", trk.bestTrack()->qualityMask()); 
+    pcand.addUserFloat("normalisedChi2", trk.bestTrack()->normalizedChi2()); 
+    pcand.addUserInt("numberOfValidHits", trk.bestTrack()->numberOfValidHits()); 
+    pcand.addUserInt("numberOfLostHits", trk.bestTrack()->numberOfLostHits()); 
+    pcand.addUserInt("numberOfValidPixelHits", trk.bestTrack()->hitPattern().numberOfValidPixelHits()); 
+    pcand.addUserInt("numberOfTrackerLayers", trk.bestTrack()->hitPattern().trackerLayersWithMeasurement()); 
+    pcand.addUserInt("numberOfPixelLayers", trk.bestTrack()->hitPattern().pixelLayersWithMeasurement()); 
+    pcand.addUserInt("qualityIndex", trk.bestTrack()->qualityMask()); 
+    pcand.addUserInt("highPurityFlag", trk.bestTrack()->quality(reco::TrackBase::highPurity)); 
+    pcand.addUserInt("missingInnerHits", trk.lostInnerHits());
+    pcand.addUserFloat("validFraction", trk.bestTrack()->validFraction()); 
     //adding the candidate in the composite stuff for fit (need to test)
     if ( iTrk < nTracks )
       pcand.addUserCand( "cand", edm::Ptr<pat::PackedCandidate> ( tracks, iTrk ));

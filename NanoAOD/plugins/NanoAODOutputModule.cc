@@ -418,8 +418,9 @@ void NanoAODOutputModule::fillDescriptions(edm::ConfigurationDescriptions& descr
                                          "keep nanoaodFlatTable_*Table_*_*",
                                          "keep edmTriggerResults_*_*_*",
                                          "keep String_*_genModel_*",
-                                         "keep nanoaodMergeableCounterTable_*Table_*_*",
-                                         "keep nanoaodUniqueString_nanoMetadata_*_*"};
+                                         "keep nanoaodMergeableCounterTable_*Table_*_*"
+                                        "keep nanoaodUniqueString_nanoMetadata_*_*"
+                                          };
   edm::one::OutputModule<>::fillDescription(desc, keep);
 
   //Used by Workflow management for their own meta data

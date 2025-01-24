@@ -89,7 +89,24 @@ muonBParkTable = cms.EDProducer("SimpleCandidateFlatTableProducer",
         fired_HLT_Mu9_IP5 = Var("userInt('HLT_Mu9_IP5')",int,doc="reco muon fired this trigger"),
         fired_HLT_Mu9_IP4 = Var("userInt('HLT_Mu9_IP4')",int,doc="reco muon fired this trigger"),
         fired_HLT_Mu10p5_IP3p5 = Var("userInt('HLT_Mu10p5_IP3p5')",int,doc="reco muon fired this trigger"),
-        fired_HLT_Mu12_IP6 = Var("userInt('HLT_Mu12_IP6')",int,doc="reco muon fired this trigger")#,
+        fired_HLT_Mu12_IP6 = Var("userInt('HLT_Mu12_IP6')",int,doc="reco muon fired this trigger"),
+	inTimeMuon = Var("userFloat('inTimeID')", int, doc="inTimeMuon ID"),
+        segmentCompatibility = Var("segmentCompatibility()", float, doc = "muon segment compatibility: propagating the tracker tracks to the muon system and evaluate the number of matched segments and the closeness of the matching", precision=14), # keep higher precision since people have cuts with 3 digits on this
+        caloCompatibility = Var("caloCompatibility()", float, doc = "calorimetric compatibility"),
+        validHitFraction = Var("userFloat('validHitFraction')", float, doc = "fraction of hits a tracker track uses (among inner tracker layers it traverses)"),
+        kinkFinderChi2 = Var("userFloat('kinkFinderChi2')", float, doc = "chi2 of kink-finding algorithm: how likely it is that a track is made of more than one single track"),
+        normalisedChi2 = Var("userFloat('globalNormalisedChi2')", float, doc = "chi2/ndof of global fit"),
+        localPositionChi2 = Var("userFloat('localPositionChi2')", float, doc = "chi2 of the position match between the tracker muon and the standalone muon"),
+        trackerHighPurityFlag = Var("userInt('trackerHighPurityFlag')", int, doc = "tracker high-purity flag"), # int? 
+        numberOfValidMuonHits = Var("userInt('numberOfValidMuonHits')", int, doc = "number of hits in the muon stations"),
+        numberOfValidPixelHits = Var("userInt('numberOfValidPixelHits')", int, doc = "number of pixel hits"),
+        numberOfTrackerLayers = Var("userInt('numberOfTrackerLayers')", int, doc = "number of tracker layers with hits"),
+        numberOfPixelLayers = Var("userInt('numberOfPixelLayers')", int, doc = "number of pixel layers with hits"),
+        numberOfStations = Var("numberOfMatchedStations()", int, doc = "number of matched stations with default arbitration (segment & track)"),
+
+ #       isTriggering = Var("userInt('isTriggering')", int, doc="flag the reco muon is also triggering"),
+       # fired_HLT_Mu19 = Var("userInt('HLT_Mu19')",int,doc="reco muon fired this trigger"),
+#        fired_HLT_IsoMu24 = Var("userInt('HLT_IsoMu24')",int,doc="reco muon fired this trigger")#,
     ),
 )
 
@@ -121,6 +138,47 @@ selectedMuonsMCMatchEmbedded = cms.EDProducer(
     matching = cms.InputTag('muonsBParkMCMatchForTable')
 )
 
+muonTriggerBParkTable = muonBParkTable.clone(
+    src = cms.InputTag("muonTrgSelector:trgMuons"),
+    name = cms.string("TriggerMuon"),
+    doc  = cms.string("HLT Muons matched with reco muons"), #reco muon matched to triggering muon"),
+    variables = cms.PSet(CandVars,
+        vx = Var("vx()",float,doc="x coordinate of vertex position, in cm",precision=6),
+        vy = Var("vy()",float,doc="y coordinate of vertex position, in cm",precision=6),
+        vz = Var("vz()",float,doc="z coordinate of vertex position, in cm",precision=6)####################,
+#       trgMuonIndex = Var("userInt('trgMuonIndex')", int,doc="index in trigger muon collection")
+   )
+)
+
+muonsTriggerBParkMCMatchForTable = cms.EDProducer("MCMatcher",# cut on deltaR, deltaPt/Pt; pick best by deltaR
+    src         = muonTriggerBParkTable.src,                  # final reco collection
+    matched     = cms.InputTag("finalGenParticlesBPark"),     # final mc-truth particle collection
+    mcPdgId     = cms.vint32(13),                             # one or more PDG ID (13 = mu); absolute values (see below)
+    checkCharge = cms.bool(False),                            # True = require RECO and MC objects to have the same charge
+    mcStatus    = cms.vint32(1),                              # PYTHIA status code (1 = stable, 2 = shower, 3 = hard scattering)
+    maxDeltaR   = cms.double(0.1),                            # Minimum deltaR for the match
+    maxDPtRel   = cms.double(0.25),                           # Minimum deltaPt/Pt for the match
+    resolveAmbiguities    = cms.bool(True),                   # Forbid two RECO objects to match to the same GEN object
+    resolveByMatchQuality = cms.bool(True),                   # False = just match input in order; True = pick lowest deltaR pair first
+    motherPdgId = cms.vint32(511, 521, 531, 541),
+)
+
+muonTriggerBParkMCTable = cms.EDProducer("CandMCMatchTableProducerBPark",
+    src     = muonTriggerBParkTable.src,
+    mcMap   = cms.InputTag("muonsTriggerBParkMCMatchForTable"),
+    objName = muonTriggerBParkTable.name,
+    objType = muonTriggerBParkTable.name, 
+    branchName = cms.string("genPart"),
+    docString = cms.string("MC matching to status==1 muons"),
+)
+
+
+triggerMuonsMCMatchEmbedded = cms.EDProducer(
+    'TriggerMuonMatchEmbedder',
+    src = cms.InputTag('muonTrgSelector', 'trgMuons'),
+    matching = cms.InputTag('muonsTriggerBParkMCMatchForTable')
+)
+
 
 muonTriggerMatchedTable = muonBParkTable.clone(
     src = cms.InputTag("muonTrgSelector:trgMuons"),
@@ -135,8 +193,9 @@ muonTriggerMatchedTable = muonBParkTable.clone(
 )
 
 
-muonBParkSequence = cms.Sequence(muonTrgSelector * countTrgMuons)
-muonBParkMC = cms.Sequence(muonBParkSequence + muonsBParkMCMatchForTable + selectedMuonsMCMatchEmbedded + muonBParkMCTable)
+muonBParkSequence = cms.Sequence(muonTrgSelector)# * countTrgMuons)
+muonBParkMC = cms.Sequence(muonTrgSelector + muonsBParkMCMatchForTable + selectedMuonsMCMatchEmbedded + muonBParkMCTable)
+muonBParkMCWithTriggerMuon = cms.Sequence(muonBParkMC + muonsTriggerBParkMCMatchForTable + triggerMuonsMCMatchEmbedded + muonTriggerBParkMCTable)
 muonBParkTables = cms.Sequence(muonBParkTable)
 muonTriggerMatchedTables = cms.Sequence(muonTriggerMatchedTable)   ####
 

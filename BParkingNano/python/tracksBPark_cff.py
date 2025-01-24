@@ -105,6 +105,6 @@ _modifiers.toModify(tracksBPark,
                     #drTrg_Cleaning=-1.,
                     filterTrack=False)
 
-BToKEE_DiEle.toModify(tracksBPark,
-                      trgLepton = "electronTrgSelector:trgElectrons",
-                      lowPtElectrons = "") # don't use "slimmedLowPtElectrons"
+#BToKEE_DiEle.toModify(tracksBPark,
+#                      trgLepton = "electronTrgSelector:trgElectrons",
+#                      lowPtElectrons = "") # don't use "slimmedLowPtElectrons"

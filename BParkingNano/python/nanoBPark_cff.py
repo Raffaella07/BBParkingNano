@@ -8,6 +8,7 @@ from PhysicsTools.NanoAOD.vertices_cff import *
 from PhysicsTools.NanoAOD.NanoAODEDMEventContent_cff import *
 from PhysicsTools.BParkingNano.trgbits_cff import *
 from PhysicsTools.NanoAOD.taus_cff import *
+from PhysicsTools.NanoAOD.photons_cff import *
 from PhysicsTools.NanoAOD.boostedTaus_cff import *
 #from PhysicsTools.NanoAOD.jetsAK4_CHS_cff import *
 from PhysicsTools.NanoAOD.jets_cff import *
@@ -28,6 +29,7 @@ from PhysicsTools.BParkingNano.tracksBPark_cff import *
 ## B collections
 from PhysicsTools.BParkingNano.BToKLL_cff import *
 from PhysicsTools.BParkingNano.BToKstarLL_cff import *
+from PhysicsTools.BParkingNano.tagAndProbeJPsiMuMu_cff import * 
 
 nanoMetadata = cms.EDProducer("UniqueStringProducer",
     strings = cms.PSet(
@@ -49,16 +51,17 @@ nanoSequenceOnlyFullSim = cms.Sequence(triggerObjectBParkTables + l1bits)
 
 nanoSequenceCommon = cms.Sequence(nanoMetadata +
                                  muonBParkSequence + cms.Sequence(tauTask) +
-                                 jetSequence +                                          # dont know how to handle the muonsubptraw missing
+                                 jetSequence +                                       # dont know how to handle the muonsubptraw missing
                                  #cms.Sequence(jetTask) +
                                  linkedObjectsNew +
                                  jetTables+
                             cms.Sequence(vertexTask) + 
-                            cms.Sequence(globalTablesTask) + cms.Sequence(vertexTablesTask))
+                            cms.Sequence(globalTablesTask) + cms.Sequence(vertexTablesTask)+triggerObjectBParkTables + l1bits)
 nanoSequence = cms.Sequence(nanoSequenceCommon + nanoSequenceOnlyFullSim)
 
-nanoSequenceMC = cms.Sequence(particleLevelBParkSequence + genParticleBParkSequence + nanoSequenceCommon + jetMC +
-                              cms.Sequence(globalTablesMCTask) + cms.Sequence(genWeightsTableTask) + genParticleBParkTables + lheInfoTable)
+nanoTableTask = cms.Task(globalTablesMCTask,genWeightsTableTask)
+nanoSequenceMC = cms.Sequence(particleLevelBParkSequence + genParticleBParkSequence + nanoSequenceCommon + jetMC + genTable + genFilterTable 
+                                + genParticleBParkTables + lheInfoTable +cms.Sequence(nanoTableTask))
 
 from PhysicsTools.BParkingNano.electronsTrigger_cff import *
 def nanoAOD_customizeDiEle(process):
@@ -70,6 +73,8 @@ def nanoAOD_customizeDiEle(process):
         +countTrgElectrons)
     return process
 
+
+
 def nanoAOD_customizeMuonTriggerBPark(process):
     process.nanoSequence = cms.Sequence( process.nanoSequence + muonBParkSequence + muonBParkTables)#+ muonTriggerMatchedTables)   ###comment in this extra table in case you want to create the TriggerMuon collection again.
     return process
@@ -79,17 +84,21 @@ def nanoAOD_customizeTrackFilteredBPark(process):
     return process
 
 def nanoAOD_customizeElectronFilteredBPark(process):
-    #process.nanoBKeeSequence     = cms.Sequence( electronsBParkSequence + electronBParkTables)
-    #process.nanoBKstarEESequence = cms.Sequence( electronsBParkSequence + electronBParkTables)
+    process.nanoBKeeSequence     = cms.Sequence( electronsBParkSequence + electronBParkTables)
+    process.nanoBKstarEESequence = cms.Sequence( electronsBParkSequence + electronBParkTables)
     return process
 
 def nanoAOD_customizeTriggerBitsBPark(process):
     process.nanoSequence = cms.Sequence( process.nanoSequence + trgTables)
     return process
 
+def nanoAOD_customizePho(process):
+    process.nanoPhoton = cms.Sequence(photonTablesTask)
+    return process
+
 def nanoAOD_customizeBToKLL(process):
-    #process.nanoBKeeSequence   = cms.Sequence( process.nanoBKeeSequence + BToKEESequence    + BToKeeTable   )
-    #process.nanoBKMuMuSequence = cms.Sequence( BToKMuMuSequence + BToKmumuTable )
+    process.nanoBKeeSequence   = cms.Sequence( process.nanoBKeeSequence + BToKEESequence    + BToKeeTable   )
+    process.nanoBKMuMuSequence = cms.Sequence( BToKMuMuSequence + BToKmumuTable )
     return process
 
 #three possibilities for K*LL
@@ -104,18 +113,40 @@ def nanoAOD_customizeBToKstarEE(process):
 def nanoAOD_customizeBToKstarMuMu(process):
     #process.nanoBKstarMuMuSequence = cms.Sequence( BToKstarMuMuSequence + BToKstarMuMuTable + KstarToKPiTable )
     return process
+def nanoAOD_customizeTagAndProbeJPsiToMuMu(process, isMC=False):
+    if isMC == False:
+      process.nanoJPsiToMuMuSequence = cms.Sequence( JPsiToMuMuSequence + JPsiToMuMuTable )
+    else:
+      process.nanoJPsiToMuMuSequence = cms.Sequence( JPsiToMuMuSequenceMC + JPsiToMuMuTable )
+    return process
 
 from FWCore.ParameterSet.MassReplace import massSearchReplaceAnyInputTag
-def nanoAOD_customizeMC(process):
+
+def nanoAOD_customizeMC(process, ancestor_particles=[511, 521, 531, 541], addTriggerMuonCollection=False, addProbeTracksCollection=False):
     for name, path in process.paths.iteritems():
         # replace all the non-match embedded inputs with the matched ones
         massSearchReplaceAnyInputTag(path, 'muonTrgSelector:SelectedMuons', 'selectedMuonsMCMatchEmbedded')
+       # massSearchReplaceAnyInputTag(path, 'muonTrgSelector:trgMuons', 'triggerMuonsMCMatchEmbedded')
         #massSearchReplaceAnyInputTag(path, 'electronTrgSelector:SelectedElectrons', 'selectedElectronsMCMatchEmbedded') # Is this needed if the trigger is emulated ???
         massSearchReplaceAnyInputTag(path, 'electronsForAnalysis:SelectedElectrons', 'selectedElectronsMCMatchEmbedded')
         massSearchReplaceAnyInputTag(path, 'tracksBPark:SelectedTracks', 'tracksBParkMCMatchEmbedded')
+
+        # make the JPsiToMuMuTable/count talk to the correct producer
+        massSearchReplaceAnyInputTag(path, 'JPsiToMuMu', 'JPsiToMuMuMC')
 
         # modify the path to include mc-specific info
         path.insert(0, nanoSequenceMC)
         path.replace(process.muonBParkSequence, process.muonBParkMC)
         path.replace(process.electronsBParkSequence, process.electronBParkMC)
         path.replace(process.tracksBParkSequence, process.tracksBParkMC)
+        #path.replace(process.muonBParkSequence, process.muonBParkMCWithTriggerMuon)
+        
+        if addTriggerMuonCollection:
+          path.replace(process.muonBParkSequence, process.muonBParkMCWithTriggerMuon)
+        else:
+          path.replace(process.muonBParkSequence, process.muonBParkMC)
+        path.replace(process.electronsBParkSequence, process.electronBParkMC)
+        if addProbeTracksCollection:
+          path.replace(process.tracksBParkSequence, process.tracksBParkMCWithTable)
+        else:
+          path.replace(process.tracksBParkSequence, process.tracksBParkMC)

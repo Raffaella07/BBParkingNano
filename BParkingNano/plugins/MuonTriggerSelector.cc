@@ -133,7 +133,7 @@ void MuonTriggerSelector::produce(edm::Event& iEvent, const edm::EventSetup& iSe
     std::vector<std::vector<float>> DPT;    
     if(debug)std::cout<<std::endl;
     for(const pat::Muon &muon : *muons){
-        if(debug)std::cout <<"Muon Pt="<< muon.pt() << " Eta=" << muon.eta() << " Phi=" << muon.phi()  <<endl;
+//    if(debug)std::cout <<"Muon Pt="<< muon.pt() << " Eta=" << muon.eta() << " Phi=" << muon.phi()  <<endl;
 
         std::vector<int> frs(HLTPaths_.size(),0); //path fires for each reco muon
 //        std::vector<int> sds(L1Seeds_.size(),0);// L1 Seeds for each L1 muon
@@ -174,12 +174,13 @@ void MuonTriggerSelector::produce(edm::Event& iEvent, const edm::EventSetup& iSe
                         float dpt=(muon.triggerObjectMatch(i)->pt()-muon.pt())/muon.triggerObjectMatch(i)->pt();
                         temp_dr[i]=dr;
                         temp_dpt[i]=dpt;
-                        temp_pt[i]=muon.triggerObjectMatch(i)->pt();                   
+                        temp_pt[i]=muon.triggerObjectMatch(i)->pt();   
+                        if (muon.triggerObjectMatch(i)->pt()>20.){                
                         if(debug)std::cout <<" Path=" <<cstr << endl;
                         if(debug)std::cout <<" HLT  Pt="<<muon.triggerObjectMatch(i)->pt() <<" Eta="<<muon.triggerObjectMatch(i)->eta() <<" Phi="<<muon.triggerObjectMatch(i)->phi() << endl;
                         if(debug)std::cout <<" Muon Pt="<< muon.pt() << " Eta=" << muon.eta() << " Phi=" << muon.phi()  <<endl;
                         if(debug)std::cout <<" DR = " << temp_dr[i] <<endl;
-                    }
+                    }}
                 }
                 // and now we find the real minimum between the reco muon and all its matched HLT objects. 
                 temp_DR[ipath]=*min_element(temp_dr.begin(),temp_dr.end());
@@ -239,7 +240,7 @@ void MuonTriggerSelector::produce(edm::Event& iEvent, const edm::EventSetup& iSe
 
         bool SkipMuon=true;
         if(dzTrg_cleaning_<0) SkipMuon=false;
-        if(debug && trgmuons_out->size()==0) std::cout <<"HERE!!" << endl;
+       // if(debug && trgmuons_out->size()==0) std::cout <<"HERE!!" << endl;
         for(const pat::Muon & trgmu : *trgmuons_out){
             if(fabs(muon.vz()-trgmu.vz())> dzTrg_cleaning_ && dzTrg_cleaning_>0) continue;
             SkipMuon=false;
@@ -250,6 +251,17 @@ void MuonTriggerSelector::produce(edm::Event& iEvent, const edm::EventSetup& iSe
         if(!muonTT.isValid()) continue; // GM: and why do we skip this muon if muonTT is invalid? This seems to have no effect so I kept it.
 
         muons_out->emplace_back(muon);
+	muons_out->back().addUserFloat("inTimeID",muon.reco::Muon::passed(reco::Muon::InTimeMuon));
+	muons_out->back().addUserFloat("validHitFraction",muon.isGlobalMuon() || muon.isTrackerMuon() ? muon.innerTrack()->validFraction(): -1.);
+        muons_out->back().addUserFloat( "kinkFinderChi2", muon.combinedQuality().trkKink);
+        muons_out->back().addUserFloat("globalNormalisedChi2",muon.isGlobalMuon() ? muon.globalTrack()->normalizedChi2(): -1.);
+        muons_out->back().addUserFloat("localPositionChi2",muon.combinedQuality().chi2LocalPosition);
+        muons_out->back().addUserInt("trackerHighPurityFlag",muon.isGlobalMuon() || muon.isTrackerMuon() ? muon.innerTrack()->quality(reco::TrackBase::highPurity): -1);
+        muons_out->back().addUserInt("numberOfValidMuonHits", muon.isGlobalMuon() ? muon.globalTrack()->hitPattern().numberOfValidMuonHits(): -1);
+        muons_out->back().addUserInt("numberOfValidPixelHits", muon.isGlobalMuon() || muon.isTrackerMuon() ? muon.innerTrack()->hitPattern().numberOfValidPixelHits(): -1);
+        muons_out->back().addUserInt("numberOfTrackerLayers",muon.isGlobalMuon() || muon.isTrackerMuon() ? muon.innerTrack()->hitPattern().trackerLayersWithMeasurement(): -1);
+        muons_out->back().addUserInt("numberOfPixelLayers", muon.isGlobalMuon() || muon.isTrackerMuon() ? muon.innerTrack()->hitPattern().pixelLayersWithMeasurement(): -1);
+        muons_out->back().addUserInt("numberOfStations",muon.numberOfMatchedStations());
         muons_out->back().addUserInt("isTriggering", muonIsTrigger[iMuo]);
         muons_out->back().addUserFloat("DR",muonDR[iMuo]);
         muons_out->back().addUserFloat("DPT",muonDPT[iMuo]);
